@@ -112,6 +112,8 @@
     </div>
 
     <script>
+        let historyChart;
+
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
@@ -126,73 +128,53 @@
             evt.currentTarget.className += " active";
 
             if (tabName === 'History') {
-                renderChart(activityLogs);
+                filterHistory('all');
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Data for Chart.js
-            var activityLogs = {{ activity_logs_json|safe }};
+        function renderChart(data) {
+            var ctx = document.getElementById('historyChart').getContext('2d');
             
-            function renderChart(data) {
-                var ctx = document.getElementById('historyChart').getContext('2d');
-                var labels = [];
-                var completedData = [];
-                var totalData = [];
+            if (historyChart) {
+                historyChart.destroy();
+            }
 
-                // Process data to get labels, completed, and total activities per day
-                var dailyData = {};
-                data.forEach(log => {
-                    var date = log.date;
-                    if (!dailyData[date]) {
-                        dailyData[date] = { completed: 0, total: 0 };
-                    }
-                    dailyData[date].total++;
-                    if (log.completed) {
-                        dailyData[date].completed++;
-                    }
-                });
-
-                for (var date in dailyData) {
-                    labels.push(date);
-                    completedData.push(dailyData[date].completed);
-                    totalData.push(dailyData[date].total);
-                }
-
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Completed Activities',
-                                data: completedData,
-                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                            },
-                            {
-                                label: 'Total Activities',
-                                data: totalData,
-                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                            },
-                        ],
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                            },
+            historyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Completed Activities',
+                            data: data.completed_data,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        },
+                        {
+                            label: 'Total Activities',
+                            data: data.total_data,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
                         },
                     },
+                },
+            });
+        }
+
+        function filterHistory(filterType) {
+            fetch(`/history/?filter=${filterType}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(data);
                 });
-            }
+        }
 
-            function filterHistory(filterType) {
-                // Implement filtering logic here
-                // For now, just re-render the chart with all data
-                renderChart(activityLogs);
-            }
-
-            // Open the first tab by default
+        document.addEventListener('DOMContentLoaded', function() {
             document.getElementsByClassName("tablinks")[0].click();
         });
     </script>

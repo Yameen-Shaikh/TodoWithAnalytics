@@ -1,10 +1,11 @@
 from django.urls import path
-from .views import signup_view, CustomLoginView, home_view, add_category, update_category, delete_category, add_task, update_task, delete_task, move_to_today, complete_task, add_activity, update_activity, delete_activity, log_activity
+from .views import signup_view, CustomLoginView, home_view, add_category, update_category, delete_category, add_task, update_task, delete_task, move_to_today, complete_task, add_activity, update_activity, delete_activity, log_activity, history_view
 
 urlpatterns = [
     path('signup/', signup_view, name='signup'),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('', home_view, name='home'),
+    path('history/', history_view, name='history'),
     path('category/add/', add_category, name='add_category'),
     path('category/<int:category_id>/update/', update_category, name='update_category'),
     path('category/<int:category_id>/delete/', delete_category, name='delete_category'),

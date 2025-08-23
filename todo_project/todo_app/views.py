@@ -2,12 +2,12 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import CustomUserCreationForm, CategoryForm, TaskForm, ActivityForm
 from .models import Category, Task, Activity, ActivityLog
 import json
-from datetime import date
-
+from datetime import date, timedelta
 
 def signup_view(request):
     if request.method == 'POST':
@@ -37,25 +37,59 @@ def home_view(request):
     }
 
     activities = Activity.objects.filter(user=request.user, parent_activity__isnull=True)
-    activity_logs = ActivityLog.objects.filter(activity__user=request.user)
-    
-    activity_logs_json = json.dumps([
-        {'date': log.date.strftime('%Y-%m-%d'), 'completed': log.completed}
-        for log in activity_logs
-    ])
 
     context = {
         'categories': categories,
         'backlog_tasks': backlog_tasks,
         'today_tasks_grouped': today_tasks_grouped,
         'activities': activities,
-        'activity_logs': activity_logs,
-        'activity_logs_json': activity_logs_json,
         'category_form': CategoryForm(),
         'task_form': TaskForm(),
         'activity_form': ActivityForm(user=request.user),
     }
     return render(request, 'home.html', context)
+
+@login_required
+def history_view(request):
+    filter_type = request.GET.get('filter', 'all')
+    user = request.user
+    today = date.today()
+
+    if filter_type == 'monthly':
+        start_date = today.replace(day=1)
+        end_date = today
+        activity_logs = ActivityLog.objects.filter(activity__user=user, date__range=[start_date, end_date])
+    elif filter_type == 'completed':
+        activity_logs = ActivityLog.objects.filter(activity__user=user, completed=True)
+    elif filter_type == 'missed':
+        activity_logs = ActivityLog.objects.filter(activity__user=user, completed=False)
+    else: # all
+        activity_logs = ActivityLog.objects.filter(activity__user=user)
+
+    data = {
+        'labels': [],
+        'completed_data': [],
+        'total_data': [],
+    }
+
+    if activity_logs.exists():
+        daily_data = {}
+        for log in activity_logs:
+            date_str = log.date.strftime('%Y-%m-%d')
+            if date_str not in daily_data:
+                daily_data[date_str] = {'completed': 0, 'total': 0}
+            daily_data[date_str]['total'] += 1
+            if log.completed:
+                daily_data[date_str]['completed'] += 1
+        
+        sorted_dates = sorted(daily_data.keys())
+        
+        for date_str in sorted_dates:
+            data['labels'].append(date_str)
+            data['completed_data'].append(daily_data[date_str]['completed'])
+            data['total_data'].append(daily_data[date_str]['total'])
+
+    return JsonResponse(data)
 
 @login_required
 def add_category(request):
