@@ -5,6 +5,9 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import CustomUserCreationForm, CategoryForm, TaskForm, ActivityForm
 from .models import Category, Task, Activity, ActivityLog
+import json
+from datetime import date
+
 
 def signup_view(request):
     if request.method == 'POST':
@@ -35,6 +38,11 @@ def home_view(request):
 
     activities = Activity.objects.filter(user=request.user, parent_activity__isnull=True)
     activity_logs = ActivityLog.objects.filter(activity__user=request.user)
+    
+    activity_logs_json = json.dumps([
+        {'date': log.date.strftime('%Y-%m-%d'), 'completed': log.completed}
+        for log in activity_logs
+    ])
 
     context = {
         'categories': categories,
@@ -42,6 +50,7 @@ def home_view(request):
         'today_tasks_grouped': today_tasks_grouped,
         'activities': activities,
         'activity_logs': activity_logs,
+        'activity_logs_json': activity_logs_json,
         'category_form': CategoryForm(),
         'task_form': TaskForm(),
         'activity_form': ActivityForm(user=request.user),
@@ -106,7 +115,7 @@ def delete_task(request, task_id):
     task.delete()
     return redirect('home')
 
-from datetime import date
+
 
 @login_required
 def move_to_today(request, task_id):

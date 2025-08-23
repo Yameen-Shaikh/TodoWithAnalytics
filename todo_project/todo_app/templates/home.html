@@ -5,6 +5,7 @@
     <title>Home</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -17,13 +18,13 @@
         </div>
 
         <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'Daily Activity')">Daily Activity</button>
+            <button class="tablinks" onclick="openTab(event, 'Daily_Activity')">Daily Activity</button>
             <button class="tablinks" onclick="openTab(event, 'Today')">Today</button>
             <button class="tablinks" onclick="openTab(event, 'Backlog')">Backlog</button>
             <button class="tablinks" onclick="openTab(event, 'History')">History</button>
         </div>
 
-        <div id="Daily Activity" class="tabcontent">
+        <div id="Daily_Activity" class="tabcontent">
             <h3>Daily Activity</h3>
             <form method="post" action="{% url 'add_activity' %}">
                 {% csrf_token %}
@@ -91,7 +92,7 @@
                     </ul>
                     <form method="post" action="{% url 'add_task' category.id %}">
                         {% csrf_token %}
-                        <input type="text" name="title" placeholder="New Task">
+                        {{ task_form.as_p }}
                         <button type="submit">Add Task</button>
                     </form>
                 </div>
@@ -111,9 +112,6 @@
     </div>
 
     <script>
-        // Data for Chart.js
-        var activityLogs = {{ activity_logs|safe }};
-
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
@@ -132,66 +130,71 @@
             }
         }
 
-        function renderChart(data) {
-            var ctx = document.getElementById('historyChart').getContext('2d');
-            var labels = [];
-            var completedData = [];
-            var totalData = [];
+        document.addEventListener('DOMContentLoaded', function() {
+            // Data for Chart.js
+            var activityLogs = {{ activity_logs_json|safe }};
+            
+            function renderChart(data) {
+                var ctx = document.getElementById('historyChart').getContext('2d');
+                var labels = [];
+                var completedData = [];
+                var totalData = [];
 
-            // Process data to get labels, completed, and total activities per day
-            var dailyData = {};
-            data.forEach(log => {
-                var date = log.date;
-                if (!dailyData[date]) {
-                    dailyData[date] = { completed: 0, total: 0 };
+                // Process data to get labels, completed, and total activities per day
+                var dailyData = {};
+                data.forEach(log => {
+                    var date = log.date;
+                    if (!dailyData[date]) {
+                        dailyData[date] = { completed: 0, total: 0 };
+                    }
+                    dailyData[date].total++;
+                    if (log.completed) {
+                        dailyData[date].completed++;
+                    }
+                });
+
+                for (var date in dailyData) {
+                    labels.push(date);
+                    completedData.push(dailyData[date].completed);
+                    totalData.push(dailyData[date].total);
                 }
-                dailyData[date].total++;
-                if (log.completed) {
-                    dailyData[date].completed++;
-                }
-            });
 
-            for (var date in dailyData) {
-                labels.push(date);
-                completedData.push(dailyData[date].completed);
-                totalData.push(dailyData[date].total);
-            }
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Completed Activities',
-                            data: completedData,
-                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                        },
-                        {
-                            label: 'Total Activities',
-                            data: totalData,
-                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                        },
-                    ],
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Completed Activities',
+                                data: completedData,
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            },
+                            {
+                                label: 'Total Activities',
+                                data: totalData,
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            },
+                        ],
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                            },
                         },
                     },
-                },
-            });
-        }
+                });
+            }
 
-        function filterHistory(filterType) {
-            // Implement filtering logic here
-            // For now, just re-render the chart with all data
-            renderChart(activityLogs);
-        }
+            function filterHistory(filterType) {
+                // Implement filtering logic here
+                // For now, just re-render the chart with all data
+                renderChart(activityLogs);
+            }
 
-        // Open the first tab by default
-        document.getElementsByClassName("tablinks")[0].click();
+            // Open the first tab by default
+            document.getElementsByClassName("tablinks")[0].click();
+        });
     </script>
 </body>
 </html>
