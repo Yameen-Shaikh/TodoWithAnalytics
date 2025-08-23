@@ -1,0 +1,197 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-text">
+                <h2>Welcome {{ user.email }}</h2>
+                <p>Good Afternoon</p>
+            </div>
+            <img src="https://via.placeholder.com/50" alt="Profile Picture" class="profile-pic">
+        </div>
+
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'Daily Activity')">Daily Activity</button>
+            <button class="tablinks" onclick="openTab(event, 'Today')">Today</button>
+            <button class="tablinks" onclick="openTab(event, 'Backlog')">Backlog</button>
+            <button class="tablinks" onclick="openTab(event, 'History')">History</button>
+        </div>
+
+        <div id="Daily Activity" class="tabcontent">
+            <h3>Daily Activity</h3>
+            <form method="post" action="{% url 'add_activity' %}">
+                {% csrf_token %}
+                {{ activity_form.as_p }}
+                <button type="submit">Add Activity</button>
+            </form>
+            {% for activity in activities %}
+                <div class="activity">
+                    <h4>
+                        <input type="checkbox" onchange="location.href='{% url 'log_activity' activity.id %}'" {% for log in activity_logs %}{% if log.activity == activity and log.completed %}checked{% endif %}{% endfor %}>
+                        {{ activity.title }}
+                    </h4>
+                    <a href="{% url 'update_activity' activity.id %}">Update</a>
+                    <a href="{% url 'delete_activity' activity.id %}">Delete</a>
+                    <ul>
+                        {% for sub_activity in activity.activity_set.all %}
+                            <li>
+                                <input type="checkbox" onchange="location.href='{% url 'log_activity' sub_activity.id %}'" {% for log in activity_logs %}{% if log.activity == sub_activity and log.completed %}checked{% endif %}{% endfor %}>
+                                {{ sub_activity.title }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div id="Today" class="tabcontent">
+            <h3>Today</h3>
+            {% for time_of_day, tasks in today_tasks_grouped.items %}
+                <h4>{{ time_of_day }}</h4>
+                <ul>
+                    {% for task in tasks %}
+                        <li>
+                            <input type="checkbox" onchange="location.href='{% url 'complete_task' task.id %}'">
+                            {{ task.title }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
+        </div>
+
+        <div id="Backlog" class="tabcontent">
+            <h3>Backlog</h3>
+            <form method="post" action="{% url 'add_category' %}">
+                {% csrf_token %}
+                <input type="text" name="name" placeholder="New Category">
+                <button type="submit">Add Category</button>
+            </form>
+            {% for category in categories %}
+                <div class="category">
+                    <h4>{{ category.name }}</h4>
+                    <a href="{% url 'update_category' category.id %}">Update</a>
+                    <a href="{% url 'delete_category' category.id %}">Delete</a>
+                    <ul>
+                        {% for task in backlog_tasks %}
+                            {% if task.category == category %}
+                                <li>
+                                    {{ task.title }}
+                                    <a href="{% url 'update_task' task.id %}">Update</a>
+                                    <a href="{% url 'delete_task' task.id %}">Delete</a>
+                                    <a href="{% url 'move_to_today' task.id %}">Move to Today</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                    <form method="post" action="{% url 'add_task' category.id %}">
+                        {% csrf_token %}
+                        <input type="text" name="title" placeholder="New Task">
+                        <button type="submit">Add Task</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div id="History" class="tabcontent">
+            <h3>History</h3>
+            <div class="filter-buttons">
+                <button onclick="filterHistory('all')">All Time</button>
+                <button onclick="filterHistory('monthly')">Monthly</button>
+                <button onclick="filterHistory('completed')">Completed</button>
+                <button onclick="filterHistory('missed')">Missed</button>
+            </div>
+            <canvas id="historyChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Data for Chart.js
+        var activityLogs = {{ activity_logs|safe }};
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            if (tabName === 'History') {
+                renderChart(activityLogs);
+            }
+        }
+
+        function renderChart(data) {
+            var ctx = document.getElementById('historyChart').getContext('2d');
+            var labels = [];
+            var completedData = [];
+            var totalData = [];
+
+            // Process data to get labels, completed, and total activities per day
+            var dailyData = {};
+            data.forEach(log => {
+                var date = log.date;
+                if (!dailyData[date]) {
+                    dailyData[date] = { completed: 0, total: 0 };
+                }
+                dailyData[date].total++;
+                if (log.completed) {
+                    dailyData[date].completed++;
+                }
+            });
+
+            for (var date in dailyData) {
+                labels.push(date);
+                completedData.push(dailyData[date].completed);
+                totalData.push(dailyData[date].total);
+            }
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Completed Activities',
+                            data: completedData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        },
+                        {
+                            label: 'Total Activities',
+                            data: totalData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        },
+                    ],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    },
+                },
+            });
+        }
+
+        function filterHistory(filterType) {
+            // Implement filtering logic here
+            // For now, just re-render the chart with all data
+            renderChart(activityLogs);
+        }
+
+        // Open the first tab by default
+        document.getElementsByClassName("tablinks")[0].click();
+    </script>
+</body>
+</html>
