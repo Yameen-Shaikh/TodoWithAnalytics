@@ -1,5 +1,4 @@
 # Project: Todo App
-
 This is a Django-based todo application.
 
 ## Progress
