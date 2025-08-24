@@ -25,8 +25,33 @@ class CustomLoginView(LoginView):
 
 @login_required
 def home_view(request):
-    categories = Category.objects.filter(user=request.user)
-    backlog_tasks = Task.objects.filter(user=request.user, is_backlog=True)
+    if request.method == 'POST':
+        if 'add_category' in request.POST:
+            form = CategoryForm(request.POST)
+            if form.is_valid():
+                category = form.save(commit=False)
+                category.user = request.user
+                category.save()
+                return redirect('home')
+        elif 'add_task' in request.POST:
+            category_id = request.POST.get('category_id')
+            category = get_object_or_404(Category, id=category_id, user=request.user)
+            form = TaskForm(request.POST)
+            if form.is_valid():
+                task = form.save(commit=False)
+                task.user = request.user
+                task.category = category
+                task.save()
+                return redirect('home')
+        elif 'add_activity' in request.POST:
+            form = ActivityForm(request.POST, user=request.user)
+            if form.is_valid():
+                activity = form.save(commit=False)
+                activity.user = request.user
+                activity.save()
+                return redirect('home')
+
+    categories = Category.objects.filter(user=request.user).prefetch_related('task_set')
     today_tasks = Task.objects.filter(user=request.user, due_date=date.today(), is_backlog=False, completed=False)
 
     today_tasks_grouped = {
@@ -37,12 +62,17 @@ def home_view(request):
     }
 
     activities = Activity.objects.filter(user=request.user, parent_activity__isnull=True)
+    completed_today_logs = ActivityLog.objects.filter(
+        activity__user=request.user,
+        date=date.today(),
+        completed=True
+    ).values_list('activity_id', flat=True)
 
     context = {
         'categories': categories,
-        'backlog_tasks': backlog_tasks,
         'today_tasks_grouped': today_tasks_grouped,
         'activities': activities,
+        'completed_today_logs': set(completed_today_logs),
         'category_form': CategoryForm(),
         'task_form': TaskForm(),
         'activity_form': ActivityForm(user=request.user),
@@ -149,8 +179,6 @@ def delete_task(request, task_id):
     task.delete()
     return redirect('home')
 
-
-
 @login_required
 def move_to_today(request, task_id):
     task = get_object_or_404(Task, id=task_id, user=request.user)
@@ -164,6 +192,8 @@ def complete_task(request, task_id):
     task = get_object_or_404(Task, id=task_id, user=request.user)
     task.completed = True
     task.save()
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success'})
     return redirect('home')
 
 @login_required
@@ -200,4 +230,6 @@ def log_activity(request, activity_id):
     log, created = ActivityLog.objects.get_or_create(activity=activity, date=date.today())
     log.completed = not log.completed
     log.save()
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'completed': log.completed})
     return redirect('home')

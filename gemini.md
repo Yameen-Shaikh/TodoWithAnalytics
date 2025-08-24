@@ -14,3 +14,7 @@ This is a Django-based todo application.
 *   Set up the static files.
 *   Created a `.gitignore` file.
 *   Fixed the static files conflict.
+*   Fixed the tab functionality on the home page.
+*   Connected the HTML pages.
+*   Implemented the "History" tab with Chart.js and filters.
+*   Refactored the views and URLs.

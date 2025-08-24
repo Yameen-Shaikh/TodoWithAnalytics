@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import signup_view, CustomLoginView, home_view, add_category, update_category, delete_category, add_task, update_task, delete_task, move_to_today, complete_task, add_activity, update_activity, delete_activity, log_activity, history_view
+from .views import signup_view, CustomLoginView, home_view, history_view, add_category, update_category, delete_category, add_task, update_task, delete_task, move_to_today, complete_task, add_activity, update_activity, delete_activity, log_activity
 
 urlpatterns = [
     path('signup/', signup_view, name='signup'),

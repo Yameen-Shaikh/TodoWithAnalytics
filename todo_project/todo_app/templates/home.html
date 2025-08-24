@@ -12,7 +12,6 @@
         <div class="header">
             <div class="header-text">
                 <h2>Welcome {{ user.email }}</h2>
-                <p>Good Afternoon</p>
             </div>
             <img src="https://via.placeholder.com/50" alt="Profile Picture" class="profile-pic">
         </div>
@@ -26,24 +25,25 @@
 
         <div id="Daily_Activity" class="tabcontent">
             <h3>Daily Activity</h3>
-            <form method="post" action="{% url 'add_activity' %}">
+            <form method="post" action="{% url 'home' %}">
                 {% csrf_token %}
+                <input type="hidden" name="add_activity" value="true">
                 {{ activity_form.as_p }}
                 <button type="submit">Add Activity</button>
             </form>
             {% for activity in activities %}
                 <div class="activity">
                     <h4>
-                        <input type="checkbox" onchange="location.href='{% url 'log_activity' activity.id %}'" {% for log in activity_logs %}{% if log.activity == activity and log.completed %}checked{% endif %}{% endfor %}>
-                        {{ activity.title }}
+                        {% url 'log_activity' activity.id as log_url %}
+                        <input type="checkbox" onchange="toggleComplete('{{ log_url }}', this)" {% if activity.id in completed_today_logs %}checked{% endif %}>                        {{ activity.title }}
                     </h4>
                     <a href="{% url 'update_activity' activity.id %}">Update</a>
                     <a href="{% url 'delete_activity' activity.id %}">Delete</a>
                     <ul>
                         {% for sub_activity in activity.activity_set.all %}
                             <li>
-                                <input type="checkbox" onchange="location.href='{% url 'log_activity' sub_activity.id %}'" {% for log in activity_logs %}{% if log.activity == sub_activity and log.completed %}checked{% endif %}{% endfor %}>
-                                {{ sub_activity.title }}
+                                {% url 'log_activity' activity.id as log_url %}
+                                <input type="checkbox" onchange="toggleComplete('{{ log_url }}', this)" {% if activity.id in completed_today_logs %}checked{% endif %}>                                {{ sub_activity.title }}
                             </li>
                         {% endfor %}
                     </ul>
@@ -57,8 +57,9 @@
                 <h4>{{ time_of_day }}</h4>
                 <ul>
                     {% for task in tasks %}
-                        <li>
-                            <input type="checkbox" onchange="location.href='{% url 'complete_task' task.id %}'">
+                        <li class="task-item">
+                            {% url 'complete_task' task.id as complete_url%}
+                            <input type="checkbox" onchange="toggleComplete('{{complete_url}}', this)">
                             {{ task.title }}
                         </li>
                     {% endfor %}
@@ -68,8 +69,9 @@
 
         <div id="Backlog" class="tabcontent">
             <h3>Backlog</h3>
-            <form method="post" action="{% url 'add_category' %}">
+            <form method="post" action="{% url 'home' %}">
                 {% csrf_token %}
+                <input type="hidden" name="add_category" value="true">
                 <input type="text" name="name" placeholder="New Category">
                 <button type="submit">Add Category</button>
             </form>
@@ -79,8 +81,8 @@
                     <a href="{% url 'update_category' category.id %}">Update</a>
                     <a href="{% url 'delete_category' category.id %}">Delete</a>
                     <ul>
-                        {% for task in backlog_tasks %}
-                            {% if task.category == category %}
+                        {% for task in category.task_set.all %}
+                            {% if task.is_backlog %}
                                 <li>
                                     {{ task.title }}
                                     <a href="{% url 'update_task' task.id %}">Update</a>
@@ -90,8 +92,10 @@
                             {% endif %}
                         {% endfor %}
                     </ul>
-                    <form method="post" action="{% url 'add_task' category.id %}">
+                    <form method="post" action="{% url 'home' %}">
                         {% csrf_token %}
+                        <input type="hidden" name="add_task" value="true">
+                        <input type="hidden" name="category_id" value="{{ category.id }}">
                         {{ task_form.as_p }}
                         <button type="submit">Add Task</button>
                     </form>
@@ -172,6 +176,24 @@
                 .then(data => {
                     renderChart(data);
                 });
+        }
+
+        function toggleComplete(url, element) {
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (element.closest('.task-item')) {
+                        element.closest('.task-item').remove();
+                    }
+                }
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
