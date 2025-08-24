@@ -18,3 +18,8 @@ This is a Django-based todo application.
 *   Connected the HTML pages.
 *   Implemented the "History" tab with Chart.js and filters.
 *   Refactored the views and URLs.
+*   Fixed a bug in the signup process where the username was always taken.
+*   Configured the user model to use email as the username.
+*   Added a management command to send email reminders for incomplete activities.
+*   Updated the settings for production deployment.
+*   Improved the user interface.
