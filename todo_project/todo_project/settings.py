@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from . import secret
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,8 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
-
+SECRET_KEY = secret.SECRET_KEY
+EMAIL_HOST_PASSWORD = secret.EMAIL_PASSWORD
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
@@ -141,5 +142,4 @@ EMAIL_HOST_USER = 'djangotodoapp@gmail.com'  # Your new Gmail address
 # EMAIL_HOST_PASSWORD = 'sznj cjda akqm nqme'
 
 #Uncomment for production
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD') # Gets the password securely
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
