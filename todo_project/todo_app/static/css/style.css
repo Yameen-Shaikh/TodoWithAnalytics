@@ -3,86 +3,255 @@
     --secondary-color: #F0F4F3;
     --text-color: #333333;
     --white-color: #FFFFFF;
+    --border-radius: 12px;
+    --shadow: 0px 4px 12px rgba(0,0,0,0.05);
 }
 
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--secondary-color);
     color: var(--text-color);
+    margin: 0;
+    padding: 0;
 }
 
+/* Main container uses full width */
 .container {
-    width: 100%;
-    max-width: 400px;
+    width: 90%;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 30px 20px;
 }
 
-h2 {
+/* Header */
+.header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
 }
 
-form {
-    display: flex;
-    flex-direction: column;
+.header h1{
+    font-family:'Times New Roman', Times, serif;
+}
+.header h2 {
+    font-size: 24px;
+    font-weight: 600;
 }
 
-input[type="email"],
-input[type="password"] {
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-}
-
-button[type="submit"] {
-    background-color: var(--primary-color);
-    color: var(--white-color);
-    padding: 15px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
+/* Tabs Navigation */
 .tab {
-    overflow: hidden;
-    border-bottom: 1px solid #ccc;
+    display: flex;
+    justify-content: center;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 30px;
+    gap: 40px;
+    flex-wrap: wrap;
 }
 
 .tab button {
-    background-color: inherit;
+    background: none;
     border: none;
-    outline: none;
     cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
-    font-size: 17px;
+    font-size: 18px;
+    padding: 14px 20px;
+    font-weight: 500;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .tab button:hover {
-    background-color: #ddd;
+    color: var(--primary-color);
 }
 
 .tab button.active {
-    border-bottom: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
+.tab button.active::after {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 100%;
+    background: var(--primary-color);
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+}
+
+/* Tab Content */
 .tabcontent {
     display: none;
     padding: 20px 0;
 }
 
-.header {
+/* Cards (for forms, lists, etc.) */
+.card {
+    background: var(--white-color);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+}
+
+/* Forms */
+form {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 15px;
+}
+
+form input,
+form select,
+form textarea {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    width: 100%;
+}
+
+form button {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    background: #2fa498;
+    color: #fff;
+
+}
+
+form button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2fa498 0%, #1d7a70 50%, #34b8ab 100%);
+    box-shadow: 0 5px 15px rgba(37,117,252,0.3);}
+
+/* Activities */
+.activity, .category, .task-item {
+    background: var(--white-color);
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.activity h4,
+.category h4 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+.activity a,
+.category a {
+    margin-right: 15px;
+    font-size: 14px;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.activity a:hover,
+.category a:hover {
+    text-decoration: underline;
+}
+
+/* Today tab horizontal layout */
+.today-content-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.today-content-horizontal h4 {
+    width: 100%;
+}
+
+.today-content-horizontal ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+}
+
+/* History filters */
+.filter-buttons {
+    display: flex;
+    justify-content: center; /* Centers buttons horizontally */
+    gap: 20px; /* Adds spacing between buttons */
+    margin: 20px 0; /* Optional: spacing from other content */
+}
+
+.filter-buttons button {
+    border: none;
+    border-radius: 8px;
+    background: #2fa498;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 10px 16px;
+}
+
+.filter-buttons button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2fa498 0%, #1d7a70 50%, #34b8ab 100%);
+    box-shadow: 0 5px 15px rgba(37,117,252,0.3);
+}
+
+/* Daily activity */
+.activity-buttons {
+    display: flex;
+    justify-content: center; /* center horizontally */
+    gap: 15px; /* spacing between buttons */
     margin-bottom: 20px;
 }
 
-.profile-pic {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+.view-sub-activities-button{
+    padding: 8px 15px;
+    border: none;
+    border-radius: 8px;
+    background: #2fa498;
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+
+.add-activity-button, 
+.view-activities-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2fa498;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.view-sub-activities-button:hover{
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2fa498 0%, #1d7a70 50%, #34b8ab 100%);
+    box-shadow: 0 5px 15px rgba(37,117,252,0.3);
+}
+
+.add-activity-button:hover, 
+.view-activities-button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2fa498 0%, #1d7a70 50%, #34b8ab 100%);
+    box-shadow: 0 5px 15px rgba(37,117,252,0.3);
+}
+
+
+.activity-form {
+    background: var(--white-color);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+}
+
+

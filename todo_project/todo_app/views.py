@@ -8,6 +8,7 @@ from .forms import CustomUserCreationForm, CategoryForm, TaskForm, ActivityForm
 from .models import Category, Task, Activity, ActivityLog
 import json
 from datetime import date, timedelta
+from django.db import IntegrityError
 
 def signup_view(request):
     if request.method == 'POST':

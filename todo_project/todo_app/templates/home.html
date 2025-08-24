@@ -11,9 +11,9 @@
     <div class="container">
         <div class="header">
             <div class="header-text">
-                <h2>Welcome {{ user.email }}</h2>
+                <h1>ToDo</h1>
+                <h2>Welcome {{ user.username }}</h2>
             </div>
-            <img src="https://via.placeholder.com/50" alt="Profile Picture" class="profile-pic">
         </div>
 
         <div class="tab">
@@ -24,35 +24,56 @@
         </div>
 
         <div id="Daily_Activity" class="tabcontent">
-            <h3>Daily Activity</h3>
-            <form method="post" action="{% url 'home' %}">
-                {% csrf_token %}
-                <input type="hidden" name="add_activity" value="true">
-                {{ activity_form.as_p }}
-                <button type="submit">Add Activity</button>
-            </form>
-            {% for activity in activities %}
-                <div class="activity">
-                    <h4>
-                        {% url 'log_activity' activity.id as log_url %}
-                        <input type="checkbox" onchange="toggleComplete('{{ log_url }}', this)" {% if activity.id in completed_today_logs %}checked{% endif %}>                        {{ activity.title }}
-                    </h4>
-                    <a href="{% url 'update_activity' activity.id %}">Update</a>
-                    <a href="{% url 'delete_activity' activity.id %}">Delete</a>
-                    <ul>
-                        {% for sub_activity in activity.activity_set.all %}
-                            <li>
-                                {% url 'log_activity' activity.id as log_url %}
-                                <input type="checkbox" onchange="toggleComplete('{{ log_url }}', this)" {% if activity.id in completed_today_logs %}checked{% endif %}>                                {{ sub_activity.title }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endfor %}
+            <div class="activity-buttons">
+                <button type="button" class="add-activity-button" onclick="toggleActivityForm()">+ Add New Activity</button>
+                <button type="button" class="view-activities-button" onclick="toggleActivities()">View Activities</button>
+            </div>
+
+            <!-- Add Activity Form -->
+            <div id="addActivityForm" class="activity-form" style="display: none;">
+                <form method="post" action="{% url 'home' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="add_activity" value="true">
+                    {{ activity_form.as_p }}
+                    <button type="submit">Add Activity</button>
+                </form>
+            </div>
+
+            <!-- Activities List -->
+            <div id="activitiesList" style="display: none;">
+                {% for activity in activities %}
+                    <div class="activity">
+                        <h4>
+                            {% url 'log_activity' activity.id as log_url %}
+                            <input type="checkbox" onchange="toggleComplete('{{ log_url }}', this)" 
+                                {% if activity.id in completed_today_logs %}checked{% endif %}> 
+                            {{ activity.title }}
+                        </h4>
+                        <a href="{% url 'update_activity' activity.id %}">Update</a>
+                        <a href="{% url 'delete_activity' activity.id %}">Delete</a>
+
+                        {% if activity.activity_set.all %}
+                            <button type="button" class="view-sub-activities-button" 
+                                onclick="toggleSubActivities('{{ activity.id }}')">
+                                View Sub-Activities
+                            </button>
+                            <ul id="subActivities_{{ activity.id }}" style="display: none;">
+                                {% for sub_activity in activity.activity_set.all %}
+                                    <li>
+                                        {% url 'log_activity' sub_activity.id as log_url %}
+                                        <input type="checkbox" onchange="toggleComplete('{{ log_url }}', this)" 
+                                            {% if sub_activity.id in completed_today_logs %}checked{% endif %}>
+                                        {{ sub_activity.title }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
 
-        <div id="Today" class="tabcontent">
-            <h3>Today</h3>
+        <div id="Today" class="tabcontent today-content-horizontal">
             {% for time_of_day, tasks in today_tasks_grouped.items %}
                 <h4>{{ time_of_day }}</h4>
                 <ul>
@@ -66,7 +87,6 @@
                 </ul>
             {% endfor %}
         </div>
-
         <div id="Backlog" class="tabcontent">
             <h3>Backlog</h3>
             <form method="post" action="{% url 'home' %}">
@@ -74,7 +94,8 @@
                 <input type="hidden" name="add_category" value="true">
                 <input type="text" name="name" placeholder="New Category">
                 <button type="submit">Add Category</button>
-            </form>
+            </form><br>
+
             {% for category in categories %}
                 <div class="category">
                     <h4>{{ category.name }}</h4>
@@ -104,7 +125,6 @@
         </div>
 
         <div id="History" class="tabcontent">
-            <h3>History</h3>
             <div class="filter-buttons">
                 <button onclick="filterHistory('all')">All Time</button>
                 <button onclick="filterHistory('monthly')">Monthly</button>
@@ -199,6 +219,27 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementsByClassName("tablinks")[0].click();
         });
+
+        function toggleActivityForm() {
+            const form = document.getElementById("addActivityForm");
+            if (form.style.display === "none") {
+                form.style.display = "block";
+            } else {
+                form.style.display = "none";
+            }
+        }
+
+        function toggleActivities() {
+            const activitiesList = document.getElementById("activitiesList");
+            activitiesList.style.display = activitiesList.style.display === "none" ? "block" : "none";
+        }
+
+        function toggleSubActivities(activityId) {
+            const subList = document.getElementById("subActivities_" + activityId);
+            subList.style.display = subList.style.display === "none" ? "block" : "none";
+        }
+
+
     </script>
 </body>
 </html>

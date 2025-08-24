@@ -5,7 +5,7 @@ from .models import User, Category, Task, Activity
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('email',)
+        fields = ('username', 'email')
 
 class CategoryForm(forms.ModelForm):
     class Meta:
